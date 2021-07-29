@@ -1,5 +1,5 @@
 # Mining5ss_SM
-Supplementary material for Mining 5ss paper
+Supplementary material for Mining 5ss paper. Within this repository, we have provided the data used in the fitting process, the code used to fit the parameters to data, and the scripts used to visualize the resulting information.
 
 ## Directory Guide
 
