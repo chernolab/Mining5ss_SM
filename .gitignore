@@ -1,5 +1,6 @@
-data/seqs/
 circos_*
 inter_intensities.txt
 code_standalone/main
 code_standalone/nohup.out
+code_compileNrun/main
+code_compileNrun/runs/*
