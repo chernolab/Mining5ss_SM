@@ -1,0 +1,32 @@
+# Generacion de header ----
+
+
+#//PARAMETROS DE BARRIDO
+gamma_start <- 0.05  #//En que gamma empiezo.
+gamma_end   <- 0.01 #//En que gamma termino.
+gamma_step  <- 0.005 #//Por cuanto voy barriendo.
+
+#//PARAMETROS DE ARCHIVOS Y DIRECTORIOS
+filename_marginales <-  '\"archivos/zebrafish/fi.txt\"' # Probabilidades de un sitio.
+filename_dobles     <-  '\"archivos/zebrafish/fij.txt\"'# Probabilidades de dos sitios.
+filename_Jij        <-  '\"\"'                         # Si existen, estimaciones anteriores de parametros J.
+filename_hi         <-  '\"\"' # Lo mismo para los h.
+prefixDirectory     <-  '\"corridas/zebrafish/\"'  # El directorio de las corridas.
+filename_errorfile  <-  '\"corridas/zebrafish/error.txt\"'
+ 
+nTermalizacion   <- 1000
+maxNoConvergence <- 100000000 #//Numero de pasos luego de encontrar la menor energia que se debe cumplir para considerar termalizado al sistema. 
+epsilonSingle    <- 0.2       #// epsilon to renew parameters hi
+epsilonJoint     <- 0.2       #// epsilon to renew parameters jij
+tolNum           <- 0.0000001 #Tolerancia numerica maxima para no tener ceros en denominadores.
+TOLERANCE_HI     <- 0.005     #Tolerancias fraccionales para el cambio de los parametros.
+TOLERANCE_JIJ    <- 0.01
+tolabsHi         <- 0.000001  #Tolerancias absolutas para el cambio de los parametros.
+tolabsJij        <- 0.000001
+memory_drag      <- 0.9       #Cuanto peso se le da al pasado.
+tolPi            <- 0.001     #Cuan chico debe ser la memoria del cambio en el error para que haya convergido.
+tolPij           <- 0.001
+SavingDataSteps  <- 10        #Cada cuanto se guardan todos los datos.
+SaveSequencesRate<- 10        #Cada cuanto se guardan ademas las secuencias y sus energias.
+TOTAL_SEQUENCES  <- 130000    #Cantidad de secuencias a generar cuando se usa el modelo.
+MUTATION_STEPS   <- 10000
