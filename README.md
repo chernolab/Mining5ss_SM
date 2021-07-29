@@ -13,7 +13,7 @@ Supplementary material for Mining 5ss paper
 
 **scripts/**: contains the R scripts used to create the circos diagrams for exploring divergent signals in different organisms, and the table used to analyse convergent signals. These scripts are intended to be used using the base directory as their working directory. This is to say, it's recommended to use **Mining5ss_SM** as the working directory for these scripts.
 
-##C++ code
+## C++ code
 
 The C++ code manages the task of inputting observed statistical data from sequences, and using it to fit a regularized parameter model.
 
@@ -39,7 +39,7 @@ The user is recommended not to edit the other files within the **include/** fold
 
 Most of the fitting work not covered in **include/generacion_secuencia** is covered within the **main.cpp** file, in the **fit_iteration()** function. Both **main.cpp** and **include/generacion_secuencia** are commented for ease of understanding.
 
-##R Scripts
+## R Scripts
 
 Within the directory **scripts/** we can find two R scripts.
 
