@@ -1,16 +1,11 @@
-//check
-// Aprende parametros de Hamiltoniano
-// Hamiltoniano:  sum h + sum sum J : Agrego multiplicadores de Lagrange de pId para la evolucion de parametros
-// Compilar con g++ -std=c++11 -D_GLIBCXX_PARALLEL -fopenmp -o main main.cpp -Ofast -Wall
-// Significado: Usar todo lo disponible hasta el c++ mas avanzado, compilar paralelizando lo posible (ver https://gcc.gnu.org/onlinedocs/libstdc++/manual/parallel_mode.html), optimizar por rapidez, mostrar todas las advertencias del compilador.
+  // Program implementing fitting algorithm.
+  // Hamiltonian (energy) operator:  sum h_i + sum sum J_{ij}, fitted as described in paper.
+  // Compiled with command g++ -std=c++11 -D_GLIBCXX_PARALLEL -fopenmp -o main main.cpp -Ofast -Wall
+  // Flags indicate the following: Use appropriate c++ version, compile any possible algorithms in parallel (see https:  //gcc.gnu.org/onlinedocs/libstdc++/manual/parallel_mode.html), optimize for speed, show all compiler warnings.
 
-// Valores iniciales para Hi y Jij pueden especificarse en files:
-//   Final_h_v1.txt y Final_jij_v1.txt
+  // Starting values for h_i and J_{ij} can be specified in files given in parametros.h.
 
-// Verificar para cada corrida las lineas con *check*
-
-// 20180201: Stop criterium based on rate of change for h's and j's
-// 201711  : Gamma value is required from command-line
+  // Convergence criterion is based on rate of change of h_i and J_{ij}.
 
 #include <iostream>
 #include <omp.h>
@@ -23,40 +18,43 @@
 #include <math.h>
 #include <ctime>
 #include <random>
-#include <functional> //Para std::bind
+#include <functional>   //For std::bind
 #include <chrono>
 #include <map>
-#include <algorithm>
+#include <algorithm>   //For execution compatible with parallelization.
 #include <numeric>
+
+#include "./include/dirtools.h"  //For preparing the directories needed.
 
 using namespace std;
 
-typedef int N;
-typedef double T;
+typedef int N;  //Can be substituted for longs if needed.
+typedef double T;  //Can be substituded for floats or other floating point types if needed.
 
-#include "./parameters.h"
+#include "./parameters.h"     //File containing parameters that can be changed between different fitting runs.
 
-std::uniform_int_distribution<N> uni20(0,3); // genera uniformemente numeros enteros entre esos dos valores (cant de bases -1)
-std::uniform_int_distribution<N> uni65(0,N_SITES-1); // genera uniformemente numeros enteros entre esos dos valores (cant de posiciones-1)
-std::uniform_real_distribution<T> dist(0.0, 1.0); //genera uniformemente numeros reales entre 0 y 1
+std::uniform_int_distribution<N> uni20(0,3);   // Generate random integer values for nucleic acid bases: (0, 1, 2, 3) -> (A, C, G, T).
+std::uniform_int_distribution<N> uni65(0,N_SITES-1);   // Generate random integer values for nucleic acid locations: (0-8) -> (1-9). N_SITES = 9 located in parametros.h
+std::uniform_real_distribution<T> dist(0.0, 1.0);   // Generate random floating-point values between 0 and 1.
 
-const N naa = 4;//Numero de aminoacidos. | Number of aminoacids.
-const N naanpos = naa * N_SITES;//Columnas y filas de la matriz Pij | Columns and rows of the matrix Pij.
+const N naa = 4;  //Number of nucleic acid bases.
+const N naanpos = naa * N_SITES;  //Columns and rows of the matrix Pij/Jij.
 
-//Matrices de parametros del modelo. | Model parameter matrices (Initially hi = log (fi) and Jij=0).
+  //Model parameter matrices (Initially hi = log (fi) and Jij=0).
+  //We use the vector class and a nested vector so as to compatibilize with operators within the algorithm library.
 std::vector<T> hi(naanpos);
 std::vector<std::vector<T>> jij(naanpos, std::vector<T>(naanpos));
 
 N numHiNonConverged;
 N numJijNonConverged;
 
-const int ncomb = N_SITES * (N_SITES + 1)/2 - N_SITES;//number of possible combinations of positions (1-1, 1-2, ... , 1-naa, 2-2,2-3,... etc)
-int PosPos[ncomb][2];//all possible combinations of positions
+const int ncomb = N_SITES * (N_SITES + 1)/2 - N_SITES;  //Number of possible combinations of positions (1-1, 1-2, ... , 1-naa, 2-2,2-3,... etc).
+int PosPos[ncomb][2];  //All possible combinations of positions.
 
-#include "./include/lectura_escritura.h"
-#include "./include/generacion_secuencia.h"
+#include "./include/lectura_escritura.h"  //File containing functions used for reading and writing files.
+#include "./include/generacion_secuencia.h"  //File containing the code used to simulate the evolution of genetic sequences and generate a number of samples from their distribution.
 
-//Una iteracion de ajuste. Retorna un booleano que informa si ya convergio o no.
+  //One fitting iteration. Returns true on convergence and false otherwise.
 template<typename N, typename T>
 bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vector<T>> pij, std::vector<T> f1Data, std::vector<std::vector<T>> f2Data, T &maxPi, T &maxPij, T &memory_change_pi, T &memory_change_pij, std::chrono::high_resolution_clock::time_point t1, N &numHiNonConverged, N &numJijNonConverged, N numJijNonzero, FILE * errorFile){
     T change;
@@ -66,18 +64,18 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
     std::ofstream sequencesFile;
     std::ofstream energyFile;
 
-    if(counter % SaveSequencesRate == 1){//Tasa de guardado de secuencias y energias.
+    if(counter % SaveSequencesRate == 1){  //Sequence ensemble and energy distribucion is saved in files this often.
         cout << counter << endl;
-        //File to save sequences:
+          //File to save sequences.
         std::string fullnameSequences = prefixDirectory;
-	fullnameSequences.append("gamma");
-	fullnameSequences.append(std::to_string(gamma));
-	fullnameSequences.append("/sequences");
+		fullnameSequences.append("gamma");
+		fullnameSequences.append(std::to_string(gamma));
+		fullnameSequences.append("/sequences");
         fullnameSequences.append(std::to_string(counter));
-	std::cout << fullnameSequences << std::endl;
+		std::cout << fullnameSequences << std::endl;
         sequencesFile.open(fullnameSequences);
 
-        //File to save sequences' energies
+          //File to save sequence energies.
         std::string fullnameEnergy = prefixDirectory;
         fullnameEnergy.append("gamma");
         fullnameEnergy.append(std::to_string(gamma));
@@ -86,25 +84,21 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
         energyFile.open(fullnameEnergy);
     }
 
-    /* a) Recalculate Pij and Pi with the new parameters */
-    // To do this I generate a large set of sequences with MC
-
-    //Reinicio valores de pij a cero.
+      //Reset joint probability (Pij) values to zero in order to later calculate them.
     std::fill(pij.begin(), pij.end(), std::vector<T>(naanpos, 0.0));
 
     int sign_change, sign_j;
     std::vector<T> energies(TOTAL_SEQUENCES);
     std::vector<std::vector<N>> sequences(TOTAL_SEQUENCES);
 
-    generar_secuencias<N,T>(TOTAL_SEQUENCES, MUTATION_STEPS, sequences, energies);
+    generar_secuencias<N,T>(TOTAL_SEQUENCES, MUTATION_STEPS, sequences, energies);  //Generate sequence ensemble, saved within the variable "sequences". Their energies are saved in "energies".
 
-    //Once every SaveSequenceRate, I refresh Pij values |
-    //Renuevo los valores de Pij con los valores de una secuencia cada SaveSequencesRate
-    for(unsigned int i=0; i<sequences.size(); i++){
+      //Recalculate Pij values by summing occurrences.
+	for(unsigned int i=0; i<sequences.size(); i++){
         vector<N> sequence = sequences[i];
         T energy = energies[i];
 
-        // Actualizo Pij con los valores de esta secuencia
+          // Actualizo Pij con los valores de esta secuencia
         for(int j=0; j<ncomb; j++){
             N index1 = PosPos[j][0] * naa + sequence[PosPos[j][0]];
             N index2 = PosPos[j][1] * naa + sequence[PosPos[j][1]];
@@ -114,7 +108,7 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
             }
         }
 
-        if(sequencesFile.is_open()){//Write sequence and its energy into files.
+        if(sequencesFile.is_open()){  //Write sequence and its energy into files.
             for (int j=0; j<N_SITES; j++){
                 sequencesFile << sequence[j] << " ";
             }
@@ -123,37 +117,36 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
         }
     }
 
-    if(sequencesFile.is_open()){
+    if(sequencesFile.is_open()){  // Close files that will no longer be in use.
         sequencesFile.close();
         energyFile.close();
     }
 
-    //Normalization of Pij | Normalizo los Pij.
+      // Normalization of Pij.
     for(int index1=0;index1<naanpos; index1++){
         for(int index2=0;index2<naanpos;index2++){
             pij[index1][index2] = pij[index1][index2]/TOTAL_SEQUENCES;
         }
     }
 
-    //Calculate Pi values as partial sums of Pij | Calculo los nuevos Pi como suma parcial de Pij.
-    //Reinicio valores de p1 a cero.
+      // Calculate Pi values as partial sums of Pij.
     for(int indA=0;indA<naanpos;indA++){
         p1[indA]=0;
     }
-    // For position 1 | Los de la posicion 1
+      // For position 1.
     for(int indA=0;indA<naa;indA++){
         for(int indx=naa;indx<(2*naa);indx++){
             p1[indA] += pij[indA][indx];
         }
     }
-    // For other positions | Los de las demas posiciones
+      // For other positions.
     for(int indA=naa;indA<naanpos;indA++){
         for(int indx=0;indx<naa;indx++){
             p1[indA] += pij[indx][indA];
         }
     }
 
-    //b) Compare Pij and Pi (from the model) to fij and fi (from data).
+      // Compare Pij and Pi (from the model) to fij and fi (from data).
     double m = 0.0;
     double mp = 0.0;
     int n1, n2;
@@ -169,6 +162,8 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
             }
         }
     }
+
+	  //This indicator takes into account the maximum error of Pij, but averages it with its previous values so as to have a smooth estimate of error.
     memory_change_pij = memory_drag * (memory_change_pij) + (1.0 - memory_drag) * fabs(mp - maxPij);
     maxPij = mp;
 
@@ -180,15 +175,18 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
             mp = m;
         }
     }
+
+	  //Same indicator for Pi.
     memory_change_pi = memory_drag * (memory_change_pi) + (1.0 - memory_drag) * fabs(mp - maxPi);
     maxPi = mp;
 
     bool error = true;
+	  //The convergence criterion requires all Hi and Jij parameters to have converged, but also for the last few error values for Pij and Pi to be within acceptable tolerance parameters.
     if(numHiNonConverged == 0 && numJijNonConverged == 0 && memory_change_pij < tolPij && memory_change_pi < tolPi){
         error = false;
-    }//ACH 20180201 + AR20181101
+    }
 
-    if(writeFiles){
+    if(writeFiles){  //Write output of parameters and probabilities.
         std::string fullnameHI = prefixDirectory;
         std::string fullnameJIJ = prefixDirectory;
         std::string fullnamePI = prefixDirectory;
@@ -204,10 +202,10 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
         fullnamePI.append(std::to_string(gamma));
         fullnamePIJ.append(std::to_string(gamma));
 
-	fullnameHI.append("/ParamH");
-	fullnameJIJ.append("/ParamJ");
-	fullnamePI.append("/Pi");
-	fullnamePIJ.append("/Pij");
+		fullnameHI.append("/ParamH");
+		fullnameJIJ.append("/ParamJ");
+		fullnamePI.append("/Pi");
+		fullnamePIJ.append("/Pij");
 
         fullnameHI.append(std::to_string(counter));
         fullnameJIJ.append(std::to_string(counter));
@@ -220,25 +218,23 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
         write_2(fullnamePIJ, pij);
     }
 
-    //c) Redefine parameters values (hi and Jij), if error is still large.
-    //The Jij are defined according to L1 regularization.
+      //Redefine parameters values (hi and Jij), if error is still large.
+      //The Jij are defined according to L1 regularization.
     if(error){
-	numJijNonzero = N_SITES * (N_SITES - 1) * 4 * 4;
-        numHiNonConverged  = 0;                               //ACH 20180201
+		numJijNonzero = N_SITES * (N_SITES - 1) * 4 * 4;
+        numHiNonConverged  = 0;
         numJijNonConverged = 0;
 
         for(int i=0;i<naanpos;i++){
-            change = epsilonSingle * (f1Data[i] - p1[i]);// / (tolNum + f1Data[i] * (1.0 - f1Data[i]));//Segunda parte (p * (1-p)) agregada BK20190411. Agrego tolNum al denominador para que el maximo cambio absoluto no sea infinito.	     //ACH 20180201
-            if(abs(change) > abs(hi[i] * TOLERANCE_HI) + tolabsHi){//Cambie de dividir por hi[i] el lado izquierdo, a multiplicar el lado derecho para evitar infinitos que ocurrian. BK20190411.
-                //printf("%d %f %f %f %f", i, f1Data[i], p1[i], fabs(change), TOLERANCE_HI * hi[i]);//Para debuggear.
-                numHiNonConverged++; //ACH 20180201
-	    }
+            change = epsilonSingle * (f1Data[i] - p1[i]);
+            if(abs(change) > abs(hi[i] * TOLERANCE_HI) + tolabsHi){
+                numHiNonConverged++;
+			}
             hi[i]+=change;
-            //printf("\n");//Para debuggear.
         }
 
         double auxJIJ;
-	std::vector<std::vector<T>> prevJij = jij;
+		std::vector<std::vector<T>> prevJij = jij;
         int n1, n2;
 
         for(int fila=0; fila<naanpos; fila++){
@@ -246,113 +242,83 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
             for(int col=0; col<naanpos; col++){
                 n2 = col / naa;
                 if(n1 != n2){
-		    if(f2Data[fila][col] < pij[fila][col]){//En este bloque if se define el signo de la diferencia.
+					if(f2Data[fila][col] < pij[fila][col]){  //This defines the sign of the difference between observed relative frequency and fitted probability.
                         sign_change = -1;
                     }
                     else{
                         sign_change = 1;
                     }
 
-                    if(jij[fila][col] == 0){//Si es cero.
-                        if(abs(f2Data[fila][col] - pij[fila][col]) < gamma){//Caso en que no se despega del cero.
+                    if(jij[fila][col] == 0){  //If the J parameter is zero.
+                        if(abs(f2Data[fila][col] - pij[fila][col]) < gamma){  //In this case, the zero parameter will not become nonzero because the motive to do so was not strong enough.
                             jij[fila][col] = 0;
-			    numJijNonzero--;
+							numJijNonzero--;
                         }
-                        else{
-			    change = epsilonJoint * ((f2Data[fila][col] - pij[fila][col]) - gamma * sign_change);
-                            if(abs(change) > fabs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){//Caso en que si se despega del cero. Mismos cambios que en H a la ecuacion de tolerancia. BK20190412
-                                numJijNonConverged++; //ACH 20180201
-			    }
+                        else{  //Otherwise, it is changed and becomes nonzero.
+							change = epsilonJoint * ((f2Data[fila][col] - pij[fila][col]) - gamma * sign_change);
+                            if(abs(change) > fabs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){  //If it changes more than a given amount, it is not considered converged.
+                                numJijNonConverged++;
+							}
                             jij[fila][col] =+ change;
-                            //printf("jij %f pij %f fij %f\n", jij[fila][col], pij[fila][col], f2Data[fila][col]);//Para debuggeo.
                         }
                     }
-                    else{//Si no es cero.
-                    	if(jij[fila][col] < 0){//En este bloque if se define el signo del jij.
+                    else{  //If the J parameter is already nonzero.
+                    	if(jij[fila][col] < 0){  //Calculate the current sign of the J parameter.
                             sign_j = -1;
                         }
                     	else{
                             sign_j = 1;
-                   	}
+                   		}
 
-			change = epsilonJoint * (f2Data[fila][col] - pij[fila][col] - gamma * sign_j);
+						change = epsilonJoint * (f2Data[fila][col] - pij[fila][col] - gamma * sign_j);
                         auxJIJ = jij[fila][col] + change;
-                        if(auxJIJ * jij[fila][col] < 0){//Si cruzaria la linea del cero.
-                            if(abs(jij[fila][col]) > abs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){//Cambia en cantidad jij[][] al irse desde ese valor a 0.
-                                numJijNonConverged++; //ACH 20180201
-			    }
-			    jij[fila][col] = 0;//Se pega al cero.
-			    numJijNonzero--;
-                            //printf("jij %f pij %f fij %f\n", jij[fila][col], pij[fila][col], f2Data[fila][col]);//Para debuggeo.
+                        if(auxJIJ * jij[fila][col] < 0){  //If it would cross the zero line.
+                            if(abs(jij[fila][col]) > abs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){
+                                numJijNonConverged++;
+							}
+							jij[fila][col] = 0;  //It will become zero.
+							numJijNonzero--;
                         }
-                        else{//Si no cruzaria la linea del cero.
-			    if(sign_change * sign_j > 0){
-				change = epsilonJoint * (f2Data[fila][col] - pij[fila][col]);//Crece de forma normal.
-                            }
-			    else{
-				change = epsilonJoint * (f2Data[fila][col] - pij[fila][col]);//Amplifico los cambios negativos con la intensidad del jij.
-			    }
-			    if(abs(change) > abs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){
-                                numJijNonConverged++; //ACH 20180201
-			    }
+                        else{  //If it would not cross the zero line.
+							change = epsilonJoint * (f2Data[fila][col] - pij[fila][col]);  //It evolves in the usual manner.
+							if(abs(change) > abs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){
+                                numJijNonConverged++;
+							}
                             jij[fila][col] += change;
-                            printf("jij %f pij %f fij %f exp %f change %f\n", jij[fila][col], pij[fila][col], f2Data[fila][col], pij[fila][col] - f2Data[fila][col], change);//Para debuggeo.
                         }
                     }
                 }
                 else{
-                    jij[fila][col] = 0;//Me aseguro que los de un mismo sitio sean nulos.
+                    jij[fila][col] = 0;  //Elements within the same site should be null (for example, 1:A and 1:G should have no interaction).
                 }
             }
         }
 
-	//Regularizacion de cantidad total de Jij.
-        /*T totalJijIntensity = 0;//Calculo que tanta intensidad total tienen los Jij como medida de cuanto deberia estar controlandolos.
-        for(int i=0; i<naanpos; i++){
-            for(int j=0; j<naanpos; j++){
-                totalJijIntensity += abs(jij[i][j]);
-            }
-        }
-	printf("%f\n", totalJijIntensity);
-
-	float total_crit = (1.0 - gamma) * ((double) numJijNonzero);
-	if(totalJijIntensity > total_crit){//Asi controlo que no se pasen de cierta cantidad. Cuanto mas permisivo el gamma, mas puede ser esto. El 0.01 es arbitrario.
-		numJijNonConverged = 0;
-		for(int fila=0; fila<naanpos; fila++){
-			for(int col=0; col<naanpos; col++){
-				jij[fila][col] *= total_crit / totalJijIntensity;
-				if(abs(jij[fila][col] - prevJij[fila][col]) > abs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){
-					numJijNonConverged++;
-				}
-			}
-		}
-	}*/
-
-        // Mido cuanto tardo
+          //Time benchmarking.
         std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
         cout << "... Tiempo: " << duration/1000000.0L << endl;
     }
 
     fprintf(errorFile, "%f\t%d\t%d\t%d\t%f\t%f\n", gamma, numHiNonConverged, numJijNonConverged, numJijNonzero, maxPi, maxPij);
-    printf("%f\t%d\t%d\t%d\t%f\t%f\n", gamma, numHiNonConverged, numJijNonConverged, numJijNonzero, maxPi, maxPij);//Para debuggeo.
+	printf("Current gamma value: %f\t H parameters not converged: %d\t J parameters not converged: %d\n", gamma, numHiNonConverged, numJijNonConverged);
+	printf("Nonzero J parameters: %d\t Maximum Pi error: %f\t Maximum Pij error: %f\n", numJijNonzero, maxPi, maxPij);  //Live printing of values.
     return error;
 }
 
 int main(int argc, char* argv[]){
     double maxPij = 0.00;
     double maxPi = 0.00;
-    cout << "Here we go!" << endl;
 
     /* ----------------------------------------------------------------------------- */
     /* 1- LOAD DATA AND DEFINE PARAMETERS .......................................... */
     /* ----------------------------------------------------------------------------- */
-    //Parametros generales  | General parameters.
+      //Parametros generales  | General parameters.
     static std::vector<T> p1(naanpos);
     static std::vector<std::vector<T>> pij(naanpos, std::vector<T>(naanpos));
 
-    int a = 0;//Auxiliary counting variable.
-    //Guardo todas las combinaciones posibles de dos posiciones.
+    int a = 0;  //Auxiliary counting variable.
+      //Save every possible two-site combination.
     for(int i=0;i<N_SITES;i++){
         for(int j=i;j<N_SITES;j++){
             if(i != j){
@@ -363,7 +329,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    //Read experimental frequencies data.
+      //Read experimental frequencies data.
     std::vector<T> f1Data(naanpos);
     std::vector<std::vector<T>> f2Data(naanpos, std::vector<T>(naanpos));
     load_f1<T>(filename_marginales, f1Data);
@@ -374,7 +340,7 @@ int main(int argc, char* argv[]){
     /* ----------------------------------------------------------------------------- */
     /* MC parameters */
 
-    ifstream j0File(filename_Jij); /*check*/
+    ifstream j0File(filename_Jij);
     if(j0File.good()){
         cout << "Initial Jij values provided." << endl;
         load_f2(filename_Jij, jij);
@@ -385,7 +351,7 @@ int main(int argc, char* argv[]){
 	    for(int j=0; j<naanpos; j++){
 		int n2 = i / naa;
 		if(n1 != n2){
-		    jij[i][j] = 0;//log(f2Data[i][j] / (f1Data[i] * f1Data[j]));
+		    jij[i][j] = 0;
 		}
 		else{
 		    jij[i][j] = 0;
@@ -395,7 +361,7 @@ int main(int argc, char* argv[]){
     }
     j0File.close();
 
-    ifstream h0File(filename_hi); /*check*/
+    ifstream h0File(filename_hi);
     if(h0File.good()){
         cout << "Initial hi values provided." << endl;
         load_f1(filename_hi, hi);
@@ -407,9 +373,22 @@ int main(int argc, char* argv[]){
     }
     h0File.close();
 
-    bool error=true;
+      //Makes sure the directory for saving data files exists.
+    prepare_directory(prefixDirectory.c_str());
+    printf("%s\n", prefixDirectory.c_str());
+    float true_gamma_change = gamma_step;
+    if(gamma_end < gamma_start){
+        true_gamma_change *= -1;
+    }
+    for(float g=gamma_start; g>=gamma_end; g+=true_gamma_change){
+	char new_gdir[200];
+	sprintf(new_gdir, "%sgamma%f", prefixDirectory.c_str(), g);
+        printf("%s\n", new_gdir);
+        prepare_directory(new_gdir);
+    }
+
+    bool error = true;
     int counter = 0;
-    //bool writeFiles = true;
     int min_iterations = 10;
 
     std::ofstream sequencesFile;
@@ -425,16 +404,16 @@ int main(int argc, char* argv[]){
     }
     FILE * errorFile = fopen(filename_errorfile.c_str(), "w");
     for(int g=0; g<=n_gamma_steps; g++){
-        double local_gamma = 1.0;//La primera iteracion la hago con gamma sobreexigente para ajustar las hi.
+        double local_gamma = 1.0;  //The first iteration is performed with a huge value of gamma in order to obtain a high-regularization scenario before starting to lower it.
         if(g >= 0){
-            if(through_zero){//Si voy a traves del cero, bajo y luego subo.
+            if(through_zero){  //Deprecated scenario use where gamma was lowered to zero and then increased (an annealing-quenching scenario).
                 local_gamma = abs(gamma_start - ((double) g) * gamma_step);
             }
-            else{//De otra forma es monotona la subida o bajada.
-                if(gamma_start > gamma_end){
+            else{  //Otherwise used for a monotonous increase in gamma.
+                if(gamma_start > gamma_end){  //The use given in the paper, where gamma is decreased.
                     local_gamma = gamma_start - ((double) g) * gamma_step;
                 }
-                else{
+                else{  //Deprecated scenario where gamma is increased.
                     local_gamma = gamma_start + ((double) g) * gamma_step;
                 }
             }
@@ -449,45 +428,19 @@ int main(int argc, char* argv[]){
         maxPi = memory_change_pi;
     	maxPij = memory_change_pij;
         counter = 0;
-	N numJijNonzero = 0;
-        while(error || counter < min_iterations){//Exijo una cantidad minima de iteraciones para darle una oportunidad a los parametros a cambiar.
+		N numJijNonzero = 0;
+        while(error || counter < min_iterations){  //We demand a minimum number of iterations so that parameters are allowed to change.
             counter++;
             error = fit_iteration<N,T>(counter, local_gamma, p1, pij, f1Data, f2Data, maxPi, maxPij, memory_change_pi, memory_change_pij, t1, numHiNonConverged, numJijNonConverged, numJijNonzero, errorFile);
-	    if(counter > MAX_NO_CONVERGENCE && g != 0){//Si lleva demasiado sin converger, el gamma era muy bajo.
-		if(through_zero){//Si el objetivo era bajar hasta un punto y luego volver.
-		    g = (int)((local_gamma + gamma_start)/gamma_step) + 1;//Lo devuelvo al paso anterior, en el momento en que toca subir en vez de bajar.
-		}
-		else{//Si el objetivo era solamente bajar.
-		    g = n_gamma_steps;//Termino la secuencia.
-		}
-	    }
+			if(counter > MAX_NO_CONVERGENCE && g != 0){  //If it hasn't converged in a long time, gamma is too low (regularization too lax).
+				if(through_zero){  //Deprecated use for the annealing-quenching case.
+					g = (int)((local_gamma + gamma_start)/gamma_step) + 1;
+				}
+				else{  //Actual use given where gamma only decreases.
+					g = n_gamma_steps;
+				}
+			}
         }
-
-        /* ----------------------------------------------------------------------------- */
-        /* 3- SAVE FINAL DATA .......................................................... */
-        /* ----------------------------------------------------------------------------- */
-
-        /*if(writeFiles){
-	    std::string appendstring = "gamma";
-            appendstring.append(std::to_string(local_gamma));
-            appendstring.append("_Final.txt");
-
-            std::string fullnameHI = prefixHI;
-            std::string fullnameJIJ = prefixJij;
-            std::string fullnamePI = prefixPI;
-            std::string fullnamePIJ = prefixPIJ;
-            fullnameHI.append(appendstring);
-            fullnameJIJ.append(appendstring);
-            fullnamePI.append(appendstring);
-            fullnamePIJ.append(appendstring);
-
-            write_1(fullnameHI, hi);
-            write_2(fullnameJIJ, jij);
-            write_1(fullnamePI, p1);
-            write_2(fullnamePIJ, pij);
-        }*/
-
-        fprintf(errorFile, "%f\t%d\t%d\t%d\t%f\t%f\n", local_gamma, numHiNonConverged, numJijNonConverged, numJijNonzero, maxPi, maxPij);
     }
     fclose(errorFile);
 

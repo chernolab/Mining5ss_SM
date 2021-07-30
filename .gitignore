@@ -4,3 +4,5 @@ code_standalone/main
 code_standalone/nohup.out
 code_compileNrun/main
 code_compileNrun/runs/*
+data/seqs/logo_plants.RData
+data/seqs/logo_animals.RData

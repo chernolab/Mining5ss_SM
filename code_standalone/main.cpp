@@ -3,6 +3,17 @@
 // Compiled with command g++ -std=c++11 -D_GLIBCXX_PARALLEL -fopenmp -o main main.cpp -Ofast -Wall
 // Flags indicate the following: Use appropriate c++ version, compile any possible algorithms in parallel (see https://gcc.gnu.org/onlinedocs/libstdc++/manual/parallel_mode.html), optimize for speed, show all compiler warnings.
 
+//INPUTS: Inputs must be specified in include/parameters.h; in the following, we will refer to the example inputs provided in the current version of the aforementioned include file, which make use of homo sapiens data (hsa)..
+//Within the folder data/freqs/hsa are included the files fi.txt and fij.txt. These contain the single-site and two-site probabilities obtained from data/seqs/logo_hsa.RData.
+//Other possible inputs (not used in current example) specify initial parameter values to start from when fitting. These are not specified in the current example, but can be substituted and used within include/parameters.h.
+
+//OUTPUTS: Outputs will be stored in the appropriate runs/ folder (in this example, runs/hsa). Within each species' folder, there exists a separate folder for each gamma value used in the fitting process, and an error file.
+//Within each gamma directory (example, runs/hsa/gamma0.050000/) are stored the different values for fitted H and J parameters (for example, /ParamH101, /ParamJ101 for the 101st iteration), the estimated single-site and two-site probabilities (/Pi101, /Pij101), and generated sequence and energy ensembles (/sequences101, /energies101) for each different fitting iteration within that gamma value.
+//There is a different storage rate for parameters and probabilities, compared to sequences and energies (for example, at current values the first are saved every 100 iterations, and the latter are not saved). This can be changed in parameters.h.
+//After the last fitting iteration of a given gamma value (suppose 0.05) the algorithm proceeds to use the same parameters to start fitting at a lower gamma value (0.045 in this case). Thus, we transition from the folder gamma0.050000/ to the folder gamma0.045000/.
+//The error file error.txt exists outside the gamma folders and stores error information for the entire run.
+//It contains, in the following order in each line, the current gamma value, the number of nonconverged H and J parameters, the number of nonzero J parameters, and the maximum error for Pis and Pijs respectively (6 entries, tab separated format).
+
 // Starting values for h_i and J_{ij} can be specified in files given in parametros.h.
 
 // Convergence criterion is based on rate of change of h_i and J_{ij}.
@@ -300,9 +311,9 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
         cout << "... Tiempo: " << duration/1000000.0L << endl;
     }
 
-    fprintf(errorFile, "%f\t%d\t%d\t%d\t%f\t%f\n", gamma, numHiNonConverged, numJijNonConverged, numJijNonzero, maxPi, maxPij);
-	printf("Current gamma value: %f\t H parameters not converged: %d\t J parameters not converged: %d\n", gamma, numHiNonConverged, numJijNonConverged);
-	printf("Nonzero J parameters: %d\t Maximum Pi error: %f\t Maximum Pij error: %f\n", numJijNonzero, maxPi, maxPij);//Live printing of values.
+    fprintf(errorFile, "Gamma:%f\tNonconverged Hs:%d\tNonconverged Js:%d\tNonzero Js:%d\tMaximum Pi error:%f\tMaximum Pij error:%f\n", gamma, numHiNonConverged, numJijNonConverged, numJijNonzero, maxPi, maxPij);
+    printf("Current gamma value: %f\t H parameters not converged: %d\t J parameters not converged: %d\n", gamma, numHiNonConverged, numJijNonConverged);//Live printing of values.
+    printf("Nonzero J parameters: %d\t Maximum Pi error: %f\t Maximum Pij error: %f\n", numJijNonzero, maxPi, maxPij);//Live printing of values.
     return error;
 }
 
