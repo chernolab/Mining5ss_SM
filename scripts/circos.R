@@ -1,14 +1,22 @@
-#The following lists show the available organisms utilized. The script will run including all of them.
-sp_list = c('cne', 'ath', 'mtr', 'osa', 'ptr', 'ggo', 'hsa', 'dre', 'mmu', 'dme', 'dps', 'dya', 'cel', 'cbr')
-sp_full_list = c('cryptococcus', 'arabidopsis', 'medicago', 'oryza', 'pan', 'gorilla', 'humano', 'zebrafish', 'mouse', 'drosophila', 'pseudoobscura', 'yacuba', 'celegans', 'briggsae')
+# Organisms to include in the analysis
+sp_list = c('cne', 
+            'ath', 'mtr', 'osa', 
+            'ptr', 'ggo', 'hsa', 'dre', 'mmu', 
+            'dme', 'dps', 'dya', 
+            'cel', 'cbr')
 
-gamma = '0.025000'#Gamma result selected to analyse.
-runs_directory = 'runs/'#Folder where the fitting results will be found.
-N = 20#Number of top J params to include within the circos diagram (to avoid clutter and focus on the important).
+gamma = '0.025000'         #Gamma result selected to analyse.
+runs_directory = 'runs/'   #Folder where the fitting results will be found.
+
+
+
+N = 20  #Number of top J params to include within the circos diagram (to avoid clutter and focus on the important).
+
+#----------------------------------------------------------------------------#
 
 ppath_list = paste(runs_directory, sp_list, '/gamma', gamma, sep='')
 d = lapply(FUN=dir, ppath_list, pattern='ParamH')
-irun = unlist(lapply(FUN=function(x){return(max(as.numeric(sub('ParamH','',x)))[1])}, d))#El numero de la maxima iteracion.
+irun = unlist(lapply(FUN=function(x){return(max(as.numeric(sub('ParamH','',x)))[1])}, d)) #El numero de la maxima iteracion.
 
 paramJ_list = lapply(FUN=function(x){return(read.table(x))}, paste('runs/', sp_list, '/gamma', gamma, '/ParamJ', irun, sep=''))#Las nuevas de Cherno.
 Pij_list = lapply(FUN=function(x){return(read.table(x))}, paste('runs/', sp_list, '/gamma', gamma, '/Pij', irun, sep=''))#Las nuevas de Cherno.
