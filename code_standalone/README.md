@@ -1,3 +1,6 @@
+C++ code to get a family of regularized maximum entropy models from observed single-site and two-site frequencies. In a typical run, models are obtained sequentially increasing the regularization level. In this way, after the last fitting iteration at a given gamma value the algorithm  authomatically continue the fitting procedure with the next specified regularization level.
+
+
 # Compilation
 
 The **main.cpp** file should be compiled using
@@ -11,7 +14,8 @@ g++ -std=c++11 -D_GLIBCXX_PARALLEL -fopenmp -o main main.cpp -Ofast -Wall
 The **include** folder contains include files where parameters and auxiliary functions are declared.
 
 * **parameters.h**: many input/output and running parameters are declared (e.g. input-output files and directories, regularization gamma values, 
-output saving rates, and convergence criteria for error values and parameter changes). 
+output saving rates, and convergence criteria for error values and parameter changes).  For instance, fhe frequency at which parameters and probabilities are saved to disk can be specified at line 26 of **parameters.h** (SavingDataSteps). The frequency at which sequences and energies are saved to disk can be specified at line 27 of **parameters.h** (SaveSequencesRate). See **parameters.h** for further details.
+
 
 * **include/dirtools.h** (should not be modified): Functionality to check for directories used for output, and creates them should they not exist.
 
@@ -21,7 +25,7 @@ output saving rates, and convergence criteria for error values and parameter cha
 
 # Input
 
-* Empirical one-site and two-site frequencies (for instance f<sub>i</sub> and f<sub>ij</sub> provided at data/freqs/hsa for Homo Sapiens) should be specified at 
+* Empirical one-site and two-site frequencies files (for instance f<sub>i</sub> and f<sub>ij</sub> provided at data/freqs/hsa for Homo Sapiens) should be specified at 
 lines 32 and 33 of the **parameters.h** file (std::string filename_marginales and std::string filename_dobles respectively). 
 
 * Previously estimated single-site fields and two-site couplings could be optionally specified at lines 35 and 36 of **parameters.h** 
@@ -29,17 +33,17 @@ lines 32 and 33 of the **parameters.h** file (std::string filename_marginales an
 
 # Output
 
-Outputs will be stored in the appropriate runs/ folder (e.g. runs/hsa for Homo Sapiens). Within each species' folder, there exists a separate folder for each
-gamma value used in the fitting process, and an error file. Within each gamma directory (example, runs/hsa/gamma0.050000/) are stored the different 
-values for fitted H and J parameters (for example, /ParamH101, /ParamJ101 for the 101st iteration), the estimated single-site and two-site probabilities (/Pi101, /Pij101), 
-and generated sequence and energy ensembles (/sequences101, /energies101) for each different fitting iteration within that gamma value.
+Outputs will be stored in the appropriate runs/ subfolder (e.g. runs/hsa for Homo Sapiens). Within each species' folder, there exists a separate folder for each
+gamma value run (e.g. runs/hsa/gamma0.050000/)
 
-There is a different storage rate for parameters and probabilities, compared to sequences and energies (for example, at current values the first are saved every 100 iterations, and the latter are not saved). 
-This can be changed in parameters.h.
-
-After the last fitting iteration of a given gamma value (suppose 0.05) the algorithm proceeds to use the same parameters to start fitting at a lower gamma value (0.045 in this case). 
-Thus, we transition from the folder gamma0.050000/ to the folder gamma0.045000/.
-
-The error file error.txt exists outside the gamma folders and stores error information for the entire run. It contains, in the following order in each line, the current gamma value, the number of 
+* ParamH : single site fitting parameters
+* ParamJ : two-site fitting parameters
+* Pi     : ensemble estimated single site probabilities
+* Pij    : ensemble estimated two-site probabilities
+* sequeneces : ensemble sequences
+* energies   : data-driven energy of ensemble sequences
+* **error.txt**  : error information for the entire run. It contains, in the following order in each line, the current gamma value, the number of 
 nonconverged H and J parameters, the number of nonzero J parameters, and the maximum error for Pis and Pijs respectively (6 entries, tab separated format).
+
+
 
