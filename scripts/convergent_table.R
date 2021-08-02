@@ -1,69 +1,69 @@
 rm(list = ls())
 require(grDevices)
 
-n_sites = 9#Number of sites within sequences analysed.
-logos_directory = 'data/'#Folder where observed frequency data will be found.
-runs_directory = 'runs/'#Folder where the fitting results will be found.
-gamma = '0.025000'#Gamma result selected to analyse.
+logos_directory = 'data/'  #Folder where observed frequency data will be found.
+runs_directory = 'runs/'   #Folder where the fitting results will be found.
+gamma = '0.025000'         #Gamma result selected to analyse.
 
-#The following lists show the available organisms utilized. The script will run including all of them.
+#Organisms to analyze.
 sp_list = c('cne', 'ath', 'mtr', 'osa', 'ptr', 'ggo', 'hsa', 'dre', 'mmu', 'cel', 'cbr', 'dme', 'dps', 'dya')
-sp_full = c('cryptococcus', 'arabidopsis', 'medicago', 'oryza', 'pan', 'gorilla', 'humano', 'zebrafish', 'mouse', 'celegans', 'briggsae', 'drosophila', 'pseudoobscura', 'yacuba')
+
+# -------------------------------------------- #
+
+n_sites = 9     
 
 load.logo = function(sp){
     #Cargo los datos del genoma
     i = match(sp, sp_list)
     load(paste(logos_directory, 'seqs/logo_', sp, '.RData', sep=''))
-    if(sp_full[i] == 'humano'){#En el caso de homo sapiens, la variable no se llama logo.
+    if(sp_list[i] == 'hsa'){#En el caso de homo sapiens, la variable no se llama logo.
         logo = logo_hsa
     }
-    if(sp_full[i] == 'arabidopsis'){
+    if(sp_list[i] == 'ath'){
         logo <- logo
     }
-    if(sp_full[i] == 'celegans'){
+    if(sp_list[i] == 'cel'){
         logo = logo_cle
     }
-    if(sp_full[i] == 'briggsae'){
+    if(sp_list[i] == 'cbr'){
         logo = logo_cbr
     }
-    if(sp_full[i] == 'cryptococcus'){
+    if(sp_list[i] == 'cne'){
         logo <- logo_cne
     }
-    if(sp_full[i] == 'drosophila'){
+    if(sp_list[i] == 'dme'){
         logo = logo_dme
     }
-    if(sp_full[i] == 'medicago'){
+    if(sp_list[i] == 'mtr'){
         logo <- logo_mtr
     }
-    if(sp_full[i] == 'oryza'){
+    if(sp_list[i] == 'osa'){
         logo = logo_osa
     }
-    if(sp_full[i] == 'pan'){
+    if(sp_list[i] == 'ptr'){
         logo = logo_ptr
     }
-    if(sp_full[i] == 'gambiae'){
-        logo = logo_aga
-    }
-    if(sp_full[i] == 'pseudoobscura'){
+    if(sp_list[i] == 'dps'){
         logo <- logo_dps
     }
-    if(sp_full[i] == 'simulans'){
+    if(sp_list[i] == 'dsi'){
         logo = logo_dsi
     }
-    if(sp_full[i] == 'yacuba'){
+    if(sp_list[i] == 'dya'){
         #logo = logo#El logo ya es correcto en yacuba, se llama logo.
     }
-    if(sp_full[i] == 'gorilla'){
+    if(sp_list[i] == 'ggo'){
         logo = logo_ggo
     }
-    if(sp_full[i] == 'mouse'){
+    if(sp_list[i] == 'mmu'){
       logo = logo_org
     }
-    if(sp_full[i] == 'zebrafish'){
+    if(sp_list[i] == 'dre'){
       #El logo ya es correctp en dre.
     }
     return(logo)
 }
+
 
 fi.distribution = function(sp){
     logo = load.logo(sp)
