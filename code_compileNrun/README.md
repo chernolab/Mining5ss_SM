@@ -1,5 +1,5 @@
 We provide R-scripts and C++ code to infer multiple fitting models for different organisms at once.
-Once **main.cpp** was compiled, you should source the **compileNrun.R** file to fit regularized maximum entropy models
+You should source the **compileNrun.R** file to fit regularized maximum entropy models
 for all the organisms specified in the first line of the R-script. For instance, the following line will consider all the organisms studied in the paper:
 
 ```
@@ -18,7 +18,7 @@ output saving rates, and convergence criteria for error values and parameter cha
 folder. For instance **parameter_ath.txt** and **parameter_mtr.txt** correspond to input parameters for Arabidopsis thaliana and Medicago truncatula respectively. 
 All the parametes_ORG.txt files used in the paper can be found in the *include* folder.
 
-These files will be sourced from the **compileNrun.R** script and will autmoatically generate the appropiate include files for code compilation. 
+These files will be sourced from the **compileNrun.R** script and will autmoatically generate the appropiate include files. 
 The script will then launch the code compilation and the model estimation procedure for each considered organism.
 
 # Output
