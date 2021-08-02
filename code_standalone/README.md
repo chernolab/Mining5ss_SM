@@ -1,4 +1,4 @@
-C++ code to get a family of regularized maximum entropy models from observed single-site and two-site frequencies. In a typical run, models are obtained sequentially increasing the regularization level. In this way, after the last fitting iteration at a given gamma value the algorithm  authomatically continue the fitting procedure with the next specified regularization level.
+C++ code to get a family of regularized maximum entropy models from observed single-site and two-site frequencies. In a typical run, models are obtained sequentially increasing the regularization level. In this way, after the last fitting iteration at a given gamma value the algorithm  authomatically resumes the fitting procedure with the next specified regularization level.
 
 
 # Compilation
