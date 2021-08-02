@@ -4,14 +4,9 @@ orgs    <- c('ath','mtr','osa',
              'cel','cbr',
              'cne')
              
-# orgname <- c('arabidopsis','medicago','oryza',
-#              'humano','pan','gorilla',
-#              'drosophila','yacuba', 'pseudoobscura',
-#              'celegans','briggsae','cryptococcus')
-
 orgname <- orgs
 
-for(iorg in c(1,4)){
+for(iorg in seq_along(orgs)){
   # Header generation ----
   source(paste0('include/params_',orgs[iorg],'.txt'))
   {
