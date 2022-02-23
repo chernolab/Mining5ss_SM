@@ -19,5 +19,4 @@ Positive and negative couplings are depicted with green and red lines respective
 
 **scripts/convergence_check.R** was used to check whether sufficient iterations of a given run had elapsed as to ensure convergence.
 
-
 All scripts should be run using the base directory as their working directory, but parameters within the files can be changed in order to use them elsewhere.
