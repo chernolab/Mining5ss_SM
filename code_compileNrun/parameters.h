@@ -15,13 +15,13 @@ N termalizacion_sin_cambio =1000;
 #define SaveSequencesRate 10
 #define TOTAL_SEQUENCES 130000
 #define MUTATION_STEPS 10000
-std::string filename_marginales = "../data/freqs/hsa/fi.txt";
-std::string filename_dobles = "../data/freqs/hsa/fij.txt";
+std::string filename_marginales = "../data/freqs/seqs_gr5/fi.txt";
+std::string filename_dobles = "../data/freqs/seqs_gr5/fij.txt";
 std::string filename_Jij = "";
 std::string filename_hi = "";
-std::string prefixDirectory = "runs/hsa/";
-std::string filename_errorfile= "runs/hsa//error.txt";
+std::string prefixDirectory = "runs/seqs_gr5/";
+std::string filename_errorfile= "runs/seqs_gr5//error.txt";
 #define gamma_start 0.05
-#define gamma_end 0.05
+#define gamma_end 0.01
 #define gamma_step 0.005
 bool through_zero = false;

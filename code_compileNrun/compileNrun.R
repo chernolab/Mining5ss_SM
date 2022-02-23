@@ -1,8 +1,5 @@
-orgs    <- c('ath','mtr','osa',
-             'hsa','pan','ggo','mmu','dre',
-             'dme','dya','dps',
-             'cel','cbr',
-             'cne')
+orgs = c('seqs_gr0', 'seqs_gr5')#c('apl', 'bta', 'clu', 'eca', 'gga', 'mdo', 'oan', 'ocu', 'sha', 'ssa', 'hvu', 'sly', 'ssc', 'xtr', 'ani', 'cci', 'mor', 'ncr', 'ppa', 'ptri', 'tae', 'vra', 'vvi')
+parallel = T
              
 orgname <- orgs
 
@@ -53,9 +50,12 @@ for(iorg in seq_along(orgs)){
     cat(orgs[iorg],' :header file generated.\n')
   }
   
+  #main_name <- './main'
+  main_name <- paste0('./main_',orgs[iorg])
   # Code compilation ----
   {
-    saux <- paste0('g++ -std=c++11 -D_GLIBCXX_PARALLEL -fopenmp -o main main.cpp -Ofast -Wall')
+    saux <- paste0('g++ -std=c++11 -D_GLIBCXX_PARALLEL -fopenmp -o ',  main_name, ' main.cpp -Ofast -Wall')
+    print(saux)
     system(saux)
     cat(orgs[iorg],': code compiled.\n')
   }
@@ -75,18 +75,30 @@ for(iorg in seq_along(orgs)){
     system(paste('cp',paste0('include/params_',orgs[iorg],'.txt'),ppath))
     
     # . start runs ----
-    #saux <- paste0('./main_',orgs[iorg])
-    saux <- './main'
-    system(saux)
+    #if(parallel){
+    #  saux <- paste('nohup ', main_name, ' & ', sep='')
+    #} else{
+    #  saux <- main_name
+    #}
+    #system(saux)
     
     # . gzip seqs and energy files ----
-    cat(orgs[iorg],' :Compressing seq and energy files...\n')
-    dirName <- paste0(ppath,'gamma',sprintf('%.6f',gg))
-    sauxE   <- paste0("gzip ",dirName, "/ener*")
-    sauxS   <- paste0("gzip ",dirName, "/seq*")
-    for(i in seq_along(dirName)){
-      system(sauxE[i])  
-      system(sauxS[i])  
+    if(!parallel){
+      cat(orgs[iorg],' :Compressing seq and energy files...\n')
+      dirName <- paste0(ppath,'gamma',sprintf('%.6f',gg))
+      sauxE   <- paste0("gzip ",dirName, "/ener*")
+      sauxS   <- paste0("gzip ",dirName, "/seq*")
+      for(i in seq_along(dirName)){
+        system(sauxE[i])  
+        system(sauxS[i])  
+      }
     }
   }
 }
+
+runstring = paste('for ORG in ', paste0(orgs, collapse=' '), sep='')
+runstring = paste(runstring, paste('\t', 'do', sep=''), sep='\n')
+runstring = paste(runstring, paste('\t', 'nohup ./main_$ORG &', sep=''), sep='\n')
+runstring = paste(runstring, paste('\t', 'done', sep=''), sep='\n')
+
+writeLines(con='run_parallel.sh', runstring)

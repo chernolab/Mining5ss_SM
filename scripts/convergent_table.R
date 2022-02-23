@@ -3,63 +3,73 @@ require(grDevices)
 
 logos_directory = 'data/'  #Folder where observed frequency data will be found.
 runs_directory = 'runs/'   #Folder where the fitting results will be found.
-gamma = '0.025000'         #Gamma result selected to analyse.
+gamma = '0.015000'         #Gamma result selected to analyse.
 
 #Organisms to analyze.
-sp_list = c('cne', 'ath', 'mtr', 'osa', 'ptr', 'ggo', 'hsa', 'dre', 'mmu', 'cel', 'cbr', 'dme', 'dps', 'dya')
-
+sp_list_old = c('cne', 'ath', 'mtr', 'osa', 'ggo', 'hsa', 'dre', 'mmu', 'cel', 'dme')
+sp_list_new = c('apl', 'bta', 'clu', 'eca', 'mdo', 'oan', 'ocu', 'sha', 'ssa', 'ssc', 'xtr')
+plants = c('ath', 'hvu', 'mtr', 'osa', 'ppa', 'ptri', 'sly', 'vvi')
+fungi = c('cne', 'ani', 'ncr', 'mor', 'cci')
+vertebrates = c('apl', 'bta', 'clu', 'dre', 'eca', 'ggo', 'hsa', 'mdo', 'mmu', 'oan', 'ocu', 'sha', 'ssa', 'ssc', 'xtr')
+invertebrates = c('dme', 'cel')
+sp_list = c(fungi, plants, vertebrates, invertebrates)
 # -------------------------------------------- #
 
 n_sites = 9     
 
 load.logo = function(sp){
     #Cargo los datos del genoma
-    i = match(sp, sp_list)
-    load(paste(logos_directory, 'seqs/logo_', sp, '.RData', sep=''))
-    if(sp_list[i] == 'hsa'){#En el caso de homo sapiens, la variable no se llama logo.
+    if(sp %in% sp_list_old){
+      load(paste(logos_directory, 'seqs/logo_', sp, '.RData', sep=''))
+      
+      if(sp == 'hsa'){#En el caso de homo sapiens, la variable no se llama logo.
         logo = logo_hsa
-    }
-    if(sp_list[i] == 'ath'){
+      }
+      if(sp == 'ath'){
         logo <- logo
-    }
-    if(sp_list[i] == 'cel'){
+      }
+      if(sp == 'cel'){
         logo = logo_cle
-    }
-    if(sp_list[i] == 'cbr'){
+      }
+      if(sp == 'cbr'){
         logo = logo_cbr
-    }
-    if(sp_list[i] == 'cne'){
+      }
+      if(sp == 'cne'){
         logo <- logo_cne
-    }
-    if(sp_list[i] == 'dme'){
+      }
+      if(sp == 'dme'){
         logo = logo_dme
-    }
-    if(sp_list[i] == 'mtr'){
+      }
+      if(sp == 'mtr'){
         logo <- logo_mtr
-    }
-    if(sp_list[i] == 'osa'){
+      }
+      if(sp == 'osa'){
         logo = logo_osa
-    }
-    if(sp_list[i] == 'ptr'){
+      }
+      if(sp == 'ptr'){
         logo = logo_ptr
-    }
-    if(sp_list[i] == 'dps'){
+      }
+      if(sp == 'dps'){
         logo <- logo_dps
-    }
-    if(sp_list[i] == 'dsi'){
+      }
+      if(sp == 'dsi'){
         logo = logo_dsi
-    }
-    if(sp_list[i] == 'dya'){
+      }
+      if(sp == 'dya'){
         #logo = logo#El logo ya es correcto en yacuba, se llama logo.
-    }
-    if(sp_list[i] == 'ggo'){
+      }
+      if(sp == 'ggo'){
         logo = logo_ggo
-    }
-    if(sp_list[i] == 'mmu'){
-      logo = logo_org
-    }
-    if(sp_list[i] == 'dre'){
-      #El logo ya es correctp en dre.
+      }
+      if(sp == 'mmu'){
+        logo = logo_org
+      }
+      if(sp == 'dre'){
+        #El logo ya es correcto en dre.
+      }
+    } else{
+      print(sp)
+      logo = readRDS(paste(logos_directory, 'seqs/logo_', sp, '.rds', sep=''))
     }
     return(logo)
 }
@@ -163,7 +173,7 @@ ppath_list = paste(runs_directory, sp_list, '/gamma', gamma, sep='')
 d = lapply(FUN=dir, ppath_list, pattern='ParamH')
 irun = unlist(lapply(FUN=function(x){return(max(as.numeric(sub('ParamH','',x)))[1])}, d))#El numero de la maxima iteracion.
 
-paramJ_list = lapply(FUN=function(x){return(read.table(x))}, paste('runs/', sp_list, '/gamma', gamma, '/ParamJ', irun, sep=''))#Las nuevas de Cherno.
+paramJ_list = lapply(FUN=read.table, paste(runs_directory, sp_list, '/gamma', gamma, '/ParamJ', irun, sep=''))#Las nuevas de Cherno.
 #paramJ_list = lapply(FUN=read.table, paste(params_directory, 'ParamJ_', sp_list, '_ach_15', sep=''))
 paramJ_list = lapply(FUN=as.matrix, paramJ_list)
 

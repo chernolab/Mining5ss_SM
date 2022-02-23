@@ -1,16 +1,17 @@
 # Organisms to include in the analysis
-sp_list = c('cne', 
-            'ath', 'mtr', 'osa', 
-            'ptr', 'ggo', 'hsa', 'dre', 'mmu', 
-            'dme', 'dps', 'dya', 
-            'cel', 'cbr')
+sp_list = c('seqs_gr0', 'seqs_gr5')#c('plantae', 'metazoa')#c('ath', 'mtr', 'osa', 'ppa', 'ptri', 'hvu', 'sly', 'vvi',
+            #'dme',
+            #'cel',
+            #'cne', 'ncr', 'mor', 'cci', 'ani',
+            #'apl', 'bta', 'clu', 'dre', 'eca', 'ggo', 'hsa', 'mdo', 'mmu', 'oan', 'ocu', 'sha', 'ssa', 'ssc', 'xtr',
+            #'metazoa', 'plantae', 'fungi')
 
 gamma = '0.025000'         #Gamma result selected to analyse.
 runs_directory = 'runs/'   #Folder where the fitting results will be found.
 
 
 
-N = 20  #Number of top J params to include within the circos diagram (to avoid clutter and focus on the important).
+N = 100  #Number of top J params to include within the circos diagram (to avoid clutter and focus on the important ones).
 
 #----------------------------------------------------------------------------#
 

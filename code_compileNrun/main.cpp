@@ -24,6 +24,8 @@
 #include <algorithm>   //For execution compatible with parallelization.
 #include <numeric>
 
+#include <float.h> //For comparison to -inf.
+
 #include "./include/dirtools.h"  //For preparing the directories needed.
 
 using namespace std;
@@ -93,8 +95,8 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
 
     generar_secuencias<N,T>(TOTAL_SEQUENCES, MUTATION_STEPS, sequences, energies);  //Generate sequence ensemble, saved within the variable "sequences". Their energies are saved in "energies".
 
-      //Recalculate Pij values by summing occurrences.
-	for(unsigned int i=0; i<sequences.size(); i++){
+    //Recalculate Pij values by summing occurrences.
+    for(unsigned int i=0; i<sequences.size(); i++){
         vector<N> sequence = sequences[i];
         T energy = energies[i];
 
@@ -122,24 +124,26 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
         energyFile.close();
     }
 
-      // Normalization of Pij.
+    // Normalization of Pij.
     for(int index1=0;index1<naanpos; index1++){
         for(int index2=0;index2<naanpos;index2++){
             pij[index1][index2] = pij[index1][index2]/TOTAL_SEQUENCES;
         }
     }
 
-      // Calculate Pi values as partial sums of Pij.
+    // Calculate Pi values as partial sums of Pij.
     for(int indA=0;indA<naanpos;indA++){
         p1[indA]=0;
     }
-      // For position 1.
+
+    // For position 1.
     for(int indA=0;indA<naa;indA++){
         for(int indx=naa;indx<(2*naa);indx++){
             p1[indA] += pij[indA][indx];
         }
     }
-      // For other positions.
+
+    // For other positions.
     for(int indA=naa;indA<naanpos;indA++){
         for(int indx=0;indx<naa;indx++){
             p1[indA] += pij[indx][indA];
@@ -202,10 +206,10 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
         fullnamePI.append(std::to_string(gamma));
         fullnamePIJ.append(std::to_string(gamma));
 
-		fullnameHI.append("/ParamH");
-		fullnameJIJ.append("/ParamJ");
-		fullnamePI.append("/Pi");
-		fullnamePIJ.append("/Pij");
+	fullnameHI.append("/ParamH");
+	fullnameJIJ.append("/ParamJ");
+	fullnamePI.append("/Pi");
+	fullnamePIJ.append("/Pij");
 
         fullnameHI.append(std::to_string(counter));
         fullnameJIJ.append(std::to_string(counter));
@@ -218,10 +222,10 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
         write_2(fullnamePIJ, pij);
     }
 
-      //Redefine parameters values (hi and Jij), if error is still large.
-      //The Jij are defined according to L1 regularization.
+    //Redefine parameters values (hi and Jij), if error is still large.
+    //The Jij are defined according to L1 regularization.
     if(error){
-		numJijNonzero = N_SITES * (N_SITES - 1) * 4 * 4;
+	numJijNonzero = N_SITES * (N_SITES - 1) * 4 * 4;
         numHiNonConverged  = 0;
         numJijNonConverged = 0;
 
@@ -229,12 +233,12 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
             change = epsilonSingle * (f1Data[i] - p1[i]);
             if(abs(change) > abs(hi[i] * TOLERANCE_HI) + tolabsHi){
                 numHiNonConverged++;
-			}
+	    }
             hi[i]+=change;
         }
 
         double auxJIJ;
-		std::vector<std::vector<T>> prevJij = jij;
+	std::vector<std::vector<T>> prevJij = jij;
         int n1, n2;
 
         for(int fila=0; fila<naanpos; fila++){
@@ -242,7 +246,7 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
             for(int col=0; col<naanpos; col++){
                 n2 = col / naa;
                 if(n1 != n2){
-					if(f2Data[fila][col] < pij[fila][col]){  //This defines the sign of the difference between observed relative frequency and fitted probability.
+		    if(f2Data[fila][col] < pij[fila][col]){  //This defines the sign of the difference between observed relative frequency and fitted probability.
                         sign_change = -1;
                     }
                     else{
@@ -252,38 +256,38 @@ bool fit_iteration(N counter, T gamma, std::vector<T> p1, std::vector<std::vecto
                     if(jij[fila][col] == 0){  //If the J parameter is zero.
                         if(abs(f2Data[fila][col] - pij[fila][col]) < gamma){  //In this case, the zero parameter will not become nonzero because the motive to do so was not strong enough.
                             jij[fila][col] = 0;
-							numJijNonzero--;
+			    numJijNonzero--;
                         }
-                        else{  //Otherwise, it is changed and becomes nonzero.
-							change = epsilonJoint * ((f2Data[fila][col] - pij[fila][col]) - gamma * sign_change);
+                        else{//Otherwise, it is changed and becomes nonzero.
+			    change = epsilonJoint * ((f2Data[fila][col] - pij[fila][col]) - gamma * sign_change);
                             if(abs(change) > fabs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){  //If it changes more than a given amount, it is not considered converged.
                                 numJijNonConverged++;
-							}
+			    }
                             jij[fila][col] =+ change;
                         }
                     }
-                    else{  //If the J parameter is already nonzero.
+                    else{//If the J parameter is already nonzero.
                     	if(jij[fila][col] < 0){  //Calculate the current sign of the J parameter.
                             sign_j = -1;
                         }
                     	else{
                             sign_j = 1;
-                   		}
+                   	}
 
-						change = epsilonJoint * (f2Data[fila][col] - pij[fila][col] - gamma * sign_j);
+			change = epsilonJoint * (f2Data[fila][col] - pij[fila][col] - gamma * sign_j);
                         auxJIJ = jij[fila][col] + change;
                         if(auxJIJ * jij[fila][col] < 0){  //If it would cross the zero line.
                             if(abs(jij[fila][col]) > abs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){
                                 numJijNonConverged++;
-							}
-							jij[fila][col] = 0;  //It will become zero.
-							numJijNonzero--;
+			    }
+			    jij[fila][col] = 0;  //It will become zero.
+			    numJijNonzero--;
                         }
                         else{  //If it would not cross the zero line.
-							change = epsilonJoint * (f2Data[fila][col] - pij[fila][col]);  //It evolves in the usual manner.
-							if(abs(change) > abs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){
+			    change = epsilonJoint * (f2Data[fila][col] - pij[fila][col]);  //It evolves in the usual manner.
+			    if(abs(change) > abs(jij[fila][col]) * TOLERANCE_JIJ + tolabsJij){
                                 numJijNonConverged++;
-							}
+			    }
                             jij[fila][col] += change;
                         }
                     }
@@ -376,11 +380,13 @@ int main(int argc, char* argv[]){
       //Makes sure the directory for saving data files exists.
     prepare_directory(prefixDirectory.c_str());
     printf("%s\n", prefixDirectory.c_str());
-    float true_gamma_change = gamma_step;
+    float gmax = gamma_end;
+    float gmin = gamma_start;
     if(gamma_end < gamma_start){
-        true_gamma_change *= -1;
+	gmax = gamma_start;
+	gmin = gamma_end;
     }
-    for(float g=gamma_start; g>=gamma_end; g+=true_gamma_change){
+    for(float g=gmin; g<=gmax; g+=gamma_step){
 	char new_gdir[200];
 	sprintf(new_gdir, "%sgamma%f", prefixDirectory.c_str(), g);
         printf("%s\n", new_gdir);

@@ -1,0 +1,35 @@
+# Meta HEADER ----
+
+orgInPath           <- '../data/freqs/sha'   # directory to look for frequencies
+orgOutPath          <- 'runs/sha/'            # output path
+
+#// Files and directories
+filename_marginales <-  paste0('\"',orgInPath,'/fi.txt\"')        # single-site frequency file
+filename_dobles     <-  paste0('\"',orgInPath,'/fij.txt\"')       # two-site frequecny file.
+filename_Jij        <-  '\"\"'                                  # starting Jij values (empty if none is considered)
+filename_hi         <-  '\"\"'                                  # starting hi values  (empty if none is considered)
+prefixDirectory     <-  paste0('\"',orgOutPath,'\"')             # output directory
+filename_errorfile  <-  paste0('\"',orgOutPath,'/error.txt\"')   # error output file
+
+
+#// gamma values
+gamma_start <- 0.05  #// starting gamma
+gamma_end   <- 0.01  #// last gamma value
+gamma_step  <- 0.005 #// gamma step (absolute value)
+ 
+nTermalizacion   <- 1000      # Thermalization steps
+maxNoConvergence <- 100000000 # Number of steps after reaching minimum energy to consider thermalization is achieved
+epsilonSingle    <- 0.2       #// epsilon to renew parameters hi
+epsilonJoint     <- 0.2       #// epsilon to renew parameters jij
+tolNum           <- 0.0000001 # Numerical tolerance for denominator values
+TOLERANCE_HI     <- 0.005     # Fractional tolerance for parameter changes
+TOLERANCE_JIJ    <- 0.01
+tolabsHi         <- 0.000001  # Absolute tolerance for parameter changes
+tolabsJij        <- 0.000001
+memory_drag      <- 0.9       # memory wheight
+tolPi            <- 0.001     # Convergence tolerance for previous error changes
+tolPij           <- 0.001     
+SavingDataSteps  <- 10        # Number of steps to save data to disk
+SaveSequencesRate<- 10        # Number of steps to save seqs and energies to disk
+TOTAL_SEQUENCES  <- 130000    # Number of ensemble sequences to evaluate model probabilities
+MUTATION_STEPS   <- 10000
