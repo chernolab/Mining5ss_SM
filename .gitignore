@@ -17,3 +17,5 @@ scripts/script_info.R
 scripts/sp_counts.R
 scripts/energies_hsa.R
 scripts/rJunBase_seq5ss.R
+data/freqs_GT/genomesftp.txt
+data/seqs/*.RData
